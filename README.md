@@ -56,7 +56,8 @@ O jogo está publicado e pronto para ser testado no **GitHub Pages**!
 
 ```text
 ├── index.html          # Arquivo principal do jogo (Estrutura do Game Boy)
-├── css/                # Estilização, layout retrô e pixel art
+├── css/                # Estilização, layout retrô 
 ├── js/                 # Inteligência, lógica das escolhas e manipulação de estados
+├── img/                # Imagens e cenários
 ├── audio/              # Pasta com as trilhas sonoras em 8-bits (Menu, Batalha e Tyler, the Creator)
 └── assets/             # Sprites pixelizados personalizados públicos
