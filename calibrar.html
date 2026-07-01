@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>🛠️ Calibrador Completo</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#1a1a2e;color:#fff;font-family:monospace;display:flex;flex-direction:column;align-items:center;padding:8px;gap:8px;min-height:100vh}
+h1{font-size:13px;color:#ff6b6b;margin-top:6px}
+.tabs{display:flex;gap:5px;flex-wrap:wrap;justify-content:center}
+.tab{padding:4px 10px;background:#333;border:none;color:#aaa;cursor:pointer;border-radius:4px;font-family:monospace;font-size:11px}
+.tab.active{background:#ff6b6b;color:#fff}
+.hint{font-size:10px;color:#888;text-align:center}
+
+/* Preview */
+#preview-wrap{position:relative;display:inline-block;user-select:none}
+#gb-img{display:block;height:65vh;width:auto}
+
+/* Elementos arrastáveis/redimensionáveis */
+.el{
+  position:absolute;cursor:move;
+  box-sizing:border-box;
+  touch-action:none;
+}
+.el .el-label{
+  position:absolute;top:-15px;left:0;
+  font-size:9px;color:#fff;background:rgba(0,0,0,0.8);
+  padding:1px 4px;white-space:nowrap;pointer-events:none;
+  border-radius:2px;
+}
+.el .resize-handle{
+  position:absolute;bottom:0;right:0;
+  width:10px;height:10px;
+  background:#fff;opacity:0.7;cursor:se-resize;
+  clip-path:polygon(100% 0,100% 100%,0 100%);
+}
+
+/* Tipos de elemento */
+.el-btn   {background:rgba(255,0,0,0.3);  border:1px solid red;}
+.el-hp    {background:rgba(0,200,255,0.3);border:2px dashed cyan;}
+.el-sprite{background:rgba(255,165,0,0.2);border:2px dashed orange;}
+.el-text  {background:rgba(128,0,255,0.2);border:2px dashed #a855f7;}
+.el-dialog{background:rgba(255,255,0,0.15);border:2px dashed yellow;}
+
+/* Painel de código */
+#panel{width:100%;max-width:520px;background:#111;border:1px solid #333;border-radius:6px;padding:8px}
+#panel-header{display:flex;gap:6px;margin-bottom:6px}
+#panel-header button{flex:1;padding:4px;background:#222;border:1px solid #444;color:#aaa;cursor:pointer;font-family:monospace;font-size:11px;border-radius:3px}
+#panel-header button.active{background:#ff6b6b;color:#fff;border-color:#ff6b6b}
+#code-out{font-size:10px;color:#7fff7f;white-space:pre;overflow-x:auto;line-height:1.6;max-height:160px;overflow-y:auto}
+.copy-btn{margin-top:6px;padding:5px;background:#ff6b6b;border:none;color:#fff;cursor:pointer;border-radius:4px;font-family:monospace;font-size:12px;width:100%}
+
+/* Legenda */
+.legend{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;font-size:10px}
+.leg{display:flex;align-items:center;gap:3px}
+.leg-dot{width:10px;height:10px;border-radius:2px}
+</style>
+</head>
+<body>
+<h1>🛠️ Calibrador Completo — Valentine Version</h1>
+
+<div class="tabs">
+  <button class="tab active" onclick="setScreen('home')">🏠 Inicial</button>
+  <button class="tab" onclick="setScreen('menu')">💬 Menu</button>
+  <button class="tab" onclick="setScreen('batalha')">⚔️ Batalha</button>
+  <button class="tab" onclick="setScreen('final')">💕 Final</button>
+  <button class="tab" onclick="setScreen('credits')">✨ Créditos</button>
+</div>
+
+<div class="legend">
+  <div class="leg"><div class="leg-dot" style="background:rgba(255,0,0,0.5);border:1px solid red"></div>Botões</div>
+  <div class="leg"><div class="leg-dot" style="background:rgba(0,200,255,0.5);border:1px dashed cyan"></div>Barras HP</div>
+  <div class="leg"><div class="leg-dot" style="background:rgba(255,165,0,0.4);border:1px dashed orange"></div>Sprites</div>
+  <div class="leg"><div class="leg-dot" style="background:rgba(128,0,255,0.4);border:1px dashed #a855f7"></div>Textos/Títulos</div>
+  <div class="leg"><div class="leg-dot" style="background:rgba(255,255,0,0.3);border:1px dashed yellow"></div>Diálogos</div>
+</div>
+
+<p class="hint">Arraste para mover · Triângulo no canto para redimensionar · Números ao vivo no painel abaixo</p>
+
+<div id="preview-wrap">
+  <img id="gb-img" src="img/gameboy-home.png" alt="GameBoy"/>
+  <!-- elementos injetados via JS -->
+</div>
+
+<div id="panel">
+  <div id="panel-header">
+    <button class="active" onclick="showTab('css')">CSS</button>
+    <button onclick="showTab('js')">JS (posições)</button>
+  </div>
+  <div id="code-out">← arraste os elementos</div>
+  <button class="copy-btn" onclick="copyCode()">📋 Copiar</button>
+</div>
+
+<script>
+// ─── Definição dos elementos por tela ───────────────────────────────────────
+const SCREENS = {
+  home: {
+    img: 'img/gameboy-home.png',
+    els: [
+      {id:'btn-up',    type:'btn',    label:'↑',      p:{top:70.8,left:23,   w:7.1, h:3.6}},
+      {id:'btn-down',  type:'btn',    label:'↓',      p:{top:78.4,left:22.2, w:7.1, h:3.6}},
+      {id:'btn-left',  type:'btn',    label:'←',      p:{top:74.8,left:14.6, w:7.1, h:3.6}},
+      {id:'btn-right', type:'btn',    label:'→',      p:{top:74.8,left:29.7, w:7.1, h:3.6}},
+      {id:'btn-a',     type:'btn',    label:'A',      p:{top:69.3,left:76.6, w:12.1,h:6.9}},
+      {id:'btn-b',     type:'btn',    label:'B',      p:{top:71.4,left:59.4, w:12.1,h:6.9}},
+      {id:'btn-start', type:'btn',    label:'START',  p:{top:64.3,left:38.5, w:22.2,h:4}},
+      {id:'start-box', type:'dialog', label:'Caixa inicial', p:{top:12,left:7, w:86,h:20}},
+    ]
+  },
+  menu: {
+    img: 'img/gameboy-home.png',
+    els: [
+      {id:'btn-up',       type:'btn',    label:'↑',       p:{top:70.8,left:23,   w:7.1, h:3.6}},
+      {id:'btn-down',     type:'btn',    label:'↓',       p:{top:78.4,left:22.2, w:7.1, h:3.6}},
+      {id:'btn-left',     type:'btn',    label:'←',       p:{top:74.8,left:14.6, w:7.1, h:3.6}},
+      {id:'btn-right',    type:'btn',    label:'→',       p:{top:74.8,left:29.7, w:7.1, h:3.6}},
+      {id:'btn-a',        type:'btn',    label:'A',       p:{top:69.3,left:76.6, w:12.1,h:6.9}},
+      {id:'btn-b',        type:'btn',    label:'B',       p:{top:71.4,left:59.4, w:12.1,h:6.9}},
+      {id:'menu-title',   type:'text',   label:'Pergunta',p:{top:5,  left:2,  w:96, h:14}},
+      {id:'menu-player',  type:'sprite', label:'Red',     p:{top:55, left:44, w:14, h:22}},
+      {id:'opt-yes',      type:'dialog', label:'COM CERTEZA', p:{top:73,left:5,  w:40, h:10}},
+      {id:'opt-no',       type:'dialog', label:'NÃO',     p:{top:73, left:55, w:40, h:10}},
+    ]
+  },
+  batalha: {
+    img: 'img/gameboy-batalha.png',
+    els: [
+      {id:'btn-up',       type:'btn',    label:'↑',       p:{top:71.2,left:23.1, w:6.8, h:3.6}},
+      {id:'btn-down',     type:'btn',    label:'↓',       p:{top:78.8,left:22.6, w:6.8, h:3.6}},
+      {id:'btn-left',     type:'btn',    label:'←',       p:{top:74.8,left:15,   w:6.8, h:3.6}},
+      {id:'btn-right',    type:'btn',    label:'→',       p:{top:74.6,left:30.8, w:6.8, h:3.6}},
+      {id:'btn-a',        type:'btn',    label:'A',       p:{top:69.5,left:79.9, w:12,  h:6.9}},
+      {id:'btn-b',        type:'btn',    label:'B',       p:{top:71.2,left:60.3, w:12,  h:6.9}},
+      {id:'hp-enemy',     type:'hp',     label:'HP inimiga', p:{top:6.1,left:22.6,w:29.9,h:5}},
+      {id:'hp-player',    type:'hp',     label:'HP jogador', p:{top:27.3,left:62.8,w:29.9,h:5}},
+      {id:'battle-enemy', type:'sprite', label:'Brava',   p:{top:2,  right:1,  w:44, h:56}},
+      {id:'battle-player',type:'sprite', label:'Red assustado', p:{top:15,left:2,w:44,h:56}},
+      {id:'battle-dialog',type:'dialog', label:'Diálogo', p:{top:78, left:2,   w:64, h:20}},
+      {id:'battle-actions',type:'dialog',label:'Fight/Run',p:{top:78,left:67,  w:31, h:20}},
+    ]
+  },
+  final: {
+    img: 'img/gameboy-final.png',
+    els: [
+      {id:'btn-up',       type:'btn',    label:'↑',       p:{top:70.8,left:23,   w:7.1, h:3.6}},
+      {id:'btn-down',     type:'btn',    label:'↓',       p:{top:78.4,left:22.2, w:7.1, h:3.6}},
+      {id:'btn-a',        type:'btn',    label:'A',       p:{top:69.3,left:76.6, w:12.1,h:6.9}},
+      {id:'btn-b',        type:'btn',    label:'B',       p:{top:71.4,left:59.4, w:12.1,h:6.9}},
+      {id:'final-couple', type:'sprite', label:'Casal',   p:{top:0,  left:0,    w:100,h:68}},
+      {id:'final-dialog', type:'dialog', label:'Mensagem',p:{top:72, left:2,    w:96, h:26}},
+    ]
+  },
+  credits: {
+    img: 'img/gameboy-home.png',
+    els: [
+      {id:'btn-a',        type:'btn',    label:'A',       p:{top:69.3,left:76.6, w:12.1,h:6.9}},
+      {id:'credits-box',  type:'dialog', label:'Caixa créditos', p:{top:8,left:6,w:88,h:36}},
+    ]
+  }
+};
+
+// ─── Estado ─────────────────────────────────────────────────────────────────
+let curScreen = 'home';
+let activeTab = 'css';
+const positions = {}; // id → {top,left,w,h} em %
+
+const wrap = document.getElementById('preview-wrap');
+const img  = document.getElementById('gb-img');
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+function iw() { return img.offsetWidth;  }
+function ih() { return img.offsetHeight; }
+function px2pct(px,total){ return +(px/total*100).toFixed(1); }
+function pct2px(pct,total){ return pct/100*total; }
+
+// ─── Cria elemento arrastável ────────────────────────────────────────────────
+function makeEl(def) {
+  const el = document.createElement('div');
+  el.className = 'el el-' + def.type;
+  el.dataset.id = def.id;
+
+  const label = document.createElement('div');
+  label.className = 'el-label';
+  label.textContent = def.label;
+  el.appendChild(label);
+
+  const handle = document.createElement('div');
+  handle.className = 'resize-handle';
+  el.appendChild(handle);
+
+  // Posição inicial
+  const p = def.p;
+  positions[def.id] = { top: p.top||0, left: p.left||0, w: p.w||20, h: p.h||10 };
+  applyPos(el, def.id);
+
+  wrap.appendChild(el);
+  makeDraggable(el, handle);
+}
+
+function applyPos(el, id) {
+  const p = positions[id];
+  el.style.top    = pct2px(p.top,  ih()) + 'px';
+  el.style.left   = pct2px(p.left, iw()) + 'px';
+  el.style.width  = pct2px(p.w,    iw()) + 'px';
+  el.style.height = pct2px(p.h,    ih()) + 'px';
+}
+
+function syncPos(el) {
+  const id = el.dataset.id;
+  positions[id] = {
+    top:  px2pct(el.offsetTop,    ih()),
+    left: px2pct(el.offsetLeft,   iw()),
+    w:    px2pct(el.offsetWidth,  iw()),
+    h:    px2pct(el.offsetHeight, ih()),
+  };
+}
+
+// ─── Drag & resize ──────────────────────────────────────────────────────────
+function makeDraggable(el, handle) {
+  let mode = null; // 'drag' | 'resize'
+  let sx, sy, sl, st, sw, sh;
+
+  function start(cx, cy, m) {
+    mode = m; sx = cx; sy = cy;
+    sl = el.offsetLeft; st = el.offsetTop;
+    sw = el.offsetWidth; sh = el.offsetHeight;
+  }
+  function move(cx, cy) {
+    if (!mode) return;
+    const dx = cx - sx, dy = cy - sy;
+    if (mode === 'drag') {
+      el.style.left = Math.max(0, Math.min(iw()-el.offsetWidth,  sl+dx)) + 'px';
+      el.style.top  = Math.max(0, Math.min(ih()-el.offsetHeight, st+dy)) + 'px';
+    } else {
+      el.style.width  = Math.max(10, sw+dx) + 'px';
+      el.style.height = Math.max(6,  sh+dy) + 'px';
+    }
+    syncPos(el);
+    updateCode();
+  }
+  function end() { mode = null; }
+
+  // Mouse
+  el.addEventListener('mousedown', e => {
+    if (e.target === handle) return;
+    e.preventDefault(); start(e.clientX, e.clientY, 'drag');
+  });
+  handle.addEventListener('mousedown', e => {
+    e.preventDefault(); e.stopPropagation(); start(e.clientX, e.clientY, 'resize');
+  });
+  document.addEventListener('mousemove', e => { if (mode) move(e.clientX, e.clientY); });
+  document.addEventListener('mouseup', end);
+
+  // Touch
+  el.addEventListener('touchstart', e => {
+    if (e.target === handle) return;
+    e.preventDefault(); start(e.touches[0].clientX, e.touches[0].clientY, 'drag');
+  }, {passive:false});
+  handle.addEventListener('touchstart', e => {
+    e.preventDefault(); e.stopPropagation();
+    start(e.touches[0].clientX, e.touches[0].clientY, 'resize');
+  }, {passive:false});
+  document.addEventListener('touchmove', e => {
+    if (mode) { e.preventDefault(); move(e.touches[0].clientX, e.touches[0].clientY); }
+  }, {passive:false});
+  document.addEventListener('touchend', end);
+}
+
+// ─── Troca de tela ──────────────────────────────────────────────────────────
+function setScreen(name) {
+  curScreen = name;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  event.target.classList.add('active');
+
+  // Remove elementos antigos
+  wrap.querySelectorAll('.el').forEach(e => e.remove());
+
+  // Troca imagem
+  img.src = SCREENS[name].img;
+
+  // Recria elementos após imagem carregar
+  img.onload = () => { SCREENS[name].els.forEach(makeEl); updateCode(); };
+  if (img.complete) { SCREENS[name].els.forEach(makeEl); updateCode(); }
+}
+
+// ─── Geração de código ───────────────────────────────────────────────────────
+function updateCode() {
+  const els = SCREENS[curScreen].els;
+  if (activeTab === 'css') {
+    const lines = els.map(def => {
+      const p = positions[def.id] || def.p;
+      return `#${def.id} { top:${p.top}%; left:${p.left}%; width:${p.w}%; height:${p.h}%; }`;
+    });
+    document.getElementById('code-out').textContent = lines.join('\n');
+  } else {
+    // Formato JS para BTN_POSITIONS
+    const btns = els.filter(d => d.type === 'btn');
+    const lines = btns.map(def => {
+      const p = positions[def.id] || def.p;
+      return `  '${def.id}': 'top:${p.top}%;left:${p.left}%;width:${p.w}%;height:${p.h}%',`;
+    });
+    document.getElementById('code-out').textContent = '{\n' + lines.join('\n') + '\n}';
+  }
+}
+
+function showTab(tab) {
+  activeTab = tab;
+  document.querySelectorAll('#panel-header button').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  updateCode();
+}
+
+function copyCode() {
+  const text = document.getElementById('code-out').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => btn.textContent = '📋 Copiar', 1500);
+  });
+}
+
+// ─── Inicialização ───────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  wrap.querySelectorAll('.el').forEach(el => applyPos(el, el.dataset.id));
+});
+img.onload = () => { SCREENS[curScreen].els.forEach(makeEl); updateCode(); };
+if (img.complete) { SCREENS[curScreen].els.forEach(makeEl); updateCode(); }
+</script>
+</body>
+</html>

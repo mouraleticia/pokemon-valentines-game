@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Valentine Version 💕</title>
+  <link rel="stylesheet" href="css/style.css"/>
+</head>
+<body>
+<div id="gameboy-wrapper">
+  <img id="gameboy-shell" src="img/gameboy-home.png" alt="GameBoy"/>
+
+  <!-- TELA 1: INICIAL -->
+  <div id="screen-start" class="screen active">
+    <div class="start-box">
+      <p class="game-title">VALENTINE<br/>VERSION</p>
+      <p class="blink-text">► PRESS A</p>
+    </div>
+  </div>
+
+  <!-- TELA 2: MENU -->
+  <div id="screen-menu" class="screen">
+    <div id="menu-title-box"><p id="menu-typewriter"></p></div>
+    <div id="menu-player" class="dir-down"></div>
+    <div id="opt-yes">YES</div>
+    <div id="opt-no">NO</div>
+  </div>
+
+  <!-- TELA 3: MUNDO DIA (caminho COM CERTEZA) -->
+  <div id="screen-world-dia" class="screen">
+    <div id="world-player-dia" class="dir-down"></div>
+    <div id="encounter-sign-dia" id="encounter-sign">!</div>
+    <div id="encounter-flash-dia" id="encounter-flash"></div>
+  </div>
+
+  <!-- TELA 4: MUNDO NOITE (caminho NÃO) -->
+  <div id="screen-world-noite" class="screen">
+    <div id="world-player-noite" class="dir-down"></div>
+    <div id="encounter-sign-noite" id="encounter-sign">!</div>
+    <div id="encounter-flash-noite" id="encounter-flash"></div>
+  </div>
+
+  <!-- TELA 5: BATALHA -->
+  <div id="screen-battle" class="screen">
+    <div class="battle-hp hp-0" id="battle-hp-enemy"></div>
+    <div class="battle-hp hp-0" id="battle-hp-player"></div>
+    <div id="battle-enemy"></div>
+    <div id="battle-player"></div>
+    <div id="battle-dialog"><p id="battle-typewriter"></p></div>
+    <div id="battle-actions-box">
+      <div class="battle-btn selected" id="btn-fight">FIGHT</div>
+      <div class="battle-btn"          id="btn-run">RUN</div>
+    </div>
+  </div>
+
+  <!-- TELA 6: FINAL -->
+  <div id="screen-final" class="screen">
+    <div id="final-couple"></div>
+    <div id="final-dialog"><p id="final-typewriter"></p></div>
+  </div>
+
+  <!-- TELA 7: CRÉDITOS -->
+  <div id="screen-credits" class="screen">
+    <div class="credits-box">
+      <p class="credits-title">✨ THE END ✨</p>
+      <p class="credits-name">created by:<br/>Letícia Moura</p>
+      <p class="credits-restart">► A: Play Again?</p>
+    </div>
+  </div>
+
+  <!-- CONTROLES -->
+  <div id="controls-map">
+    <button class="ctrl-btn" id="btn-up"    aria-label="Cima"></button>
+    <button class="ctrl-btn" id="btn-down"  aria-label="Baixo"></button>
+    <button class="ctrl-btn" id="btn-left"  aria-label="Esquerda"></button>
+    <button class="ctrl-btn" id="btn-right" aria-label="Direita"></button>
+    <button class="ctrl-btn" id="btn-a"     aria-label="A"></button>
+    <button class="ctrl-btn" id="btn-b"     aria-label="B"></button>
+    <button class="ctrl-btn" id="btn-start" aria-label="Start"></button>
+  </div>
+</div>
+<script src="js/game.js"></script>
+</body>
+</html>
